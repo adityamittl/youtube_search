@@ -11,6 +11,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "syncthing",
+    'django_celery_beat',
+    'celery',
+    'django_celery_results'
 ]
 
 MIDDLEWARE = [
@@ -49,12 +60,47 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+# Celery configuration
+CELERY_BROKER_URL = os.environ.get('REDIS_BROKER')
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# YouTube API key
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_KEY')
+YOUTUBE_SEARCH_QUERY = 'sports'
+
+# celery setting.
+CELERY_CACHE_BACKEND = 'default'
+
+# django setting.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'my_cache_table',
+    }
+}
+
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TASK_SERIALIZER = "json"
+
+
+CELERY_CACHE_BACKEND = 'django-cache'
+CELERY_RESULT_BACKEND = 'django-db'
+
+CELERY_BEAT_SCHEDULE = {
+    'execute-task-every-10-seconds': {
+        'task': 'syncthing.tasks.fetch_youtube_videos',  # Name of your task function
+        'schedule': 10.0,  # Run the task every 10 seconds
+    },
+}
+
 ROOT_URLCONF = 'youtube_search.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR/"templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
